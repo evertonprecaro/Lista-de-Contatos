@@ -10,7 +10,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.RadioGroup;
 import android.widget.Toast;
-
 import br.edu.ifsp.scl.sdm.listacontatossdm.R;
 import br.edu.ifsp.scl.sdm.listacontatossdm.util.Configuracoes;
 import butterknife.BindView;

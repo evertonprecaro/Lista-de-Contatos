@@ -1,6 +1,5 @@
 package br.edu.ifsp.scl.sdm.listacontatossdm.view;
 
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -14,7 +13,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -32,15 +30,24 @@ import br.edu.ifsp.scl.sdm.listacontatossdm.util.JsonHelper;
 
 public class ListaContatosActivity extends AppCompatActivity implements AdapterView.OnItemClickListener{
 
-    //REQUEST_CODE para abertura da tela ContatoActivity
-    private final int NOVO_CONTATO_REQUEST_CODE = 0;
-    private final int EDITAR_CONTATO_REQUEST_CODE = 1;
 
-    // Constante para passar parametros para a tela ContatoActivity - Detalhes
-    public static final String CONTATO_EXTRA = "CONTATO_EXTRA";
-    public static final String CONTATO_EDITAR = "CONTATO_EDITAR";
+    // Constantes para passar parametros para a tela ContatoActivity - Detalhes
+    public static final String EXTRA_CONTACT = "EXTRA_CONTACT";
+    public static final String SET_CONTACT = "SET_CONTACT";
+
+    //Codes para abertura da tela ContatoActivity
+    private final int NEW_CONTACT_REQUEST_CODE = 0;
+    private final int SET_CONTACT_REQUEST_CODE = 1;
 
     public static final String INDEX_LIST_VIEW = "INDEX_LIST_VIEW";
+
+    //Adapter que preenche a ListView
+    private ListaContatosAdapter listaContatosAdapter;
+
+    //Share preferences usado para salvar as configurações
+    private SharedPreferences sharedPreferences;
+    private final String SETTINGS_SHARED_PREFERENCES = "CONFIGURACOES";
+    private final String STORAGE_TYPE_SHARED_PREFERENCES = "TIPO_ARMAZENAMENTO";
 
     //Referências para as Views
     private ListView listaContatosListView;
@@ -48,13 +55,6 @@ public class ListaContatosActivity extends AppCompatActivity implements AdapterV
     //Lista de contatos usada para preencher a ListView
     private List<Contato> listaContatos;
 
-    //Adapter que preenche a ListView
-    private ListaContatosAdapter listaContatosAdapter;
-
-    //Share preferences usado para salvar as configurações
-    private SharedPreferences sharedPreferences;
-    private final String CONFIGURACOES_SHARED_PREFERENCES = "CONFIGURACOES";
-    private final String TIPO_ARMAZENAMENTO_SHARED_PREFERENCES = "TIPO_ARMAZENAMENTO";
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -65,13 +65,6 @@ public class ListaContatosActivity extends AppCompatActivity implements AdapterV
         listaContatosListView = findViewById(R.id.listaContatosListView);
 
         listaContatos = new ArrayList<>();
-        //preencheListaContatos();
-
-//        List<String> listaNomes = new ArrayList<>();
-//        for (Contato contato : listaContatos){
-//            listaNomes.add(contato.getNome());
-//        }
-//        ArrayAdapter<String> listaContatosAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, listaNomes);
 
 
         listaContatosAdapter = new ListaContatosAdapter(this, listaContatos);
@@ -82,7 +75,7 @@ public class ListaContatosActivity extends AppCompatActivity implements AdapterV
         listaContatosListView.setOnItemClickListener(this);
 
         //recuperando configurações do SharedPreferences
-        sharedPreferences = getSharedPreferences(CONFIGURACOES_SHARED_PREFERENCES, MODE_PRIVATE);
+        sharedPreferences = getSharedPreferences(SETTINGS_SHARED_PREFERENCES, MODE_PRIVATE);
         restauraConfiguracoes();
 
         restauraContatos();
@@ -106,14 +99,14 @@ public class ListaContatosActivity extends AppCompatActivity implements AdapterV
     }
 
     private void restauraConfiguracoes() {
-        int tipoArmazenamento = sharedPreferences.getInt(TIPO_ARMAZENAMENTO_SHARED_PREFERENCES, Configuracoes.ARMAZENAMENTO_INTERNO);
+        int tipoArmazenamento = sharedPreferences.getInt(STORAGE_TYPE_SHARED_PREFERENCES, Configuracoes.ARMAZENAMENTO_INTERNO);
 
         Configuracoes.getInstance().setTipoArmazenamento(tipoArmazenamento);
     }
 
     private void salvaConfiguracoes() {
         SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putInt(TIPO_ARMAZENAMENTO_SHARED_PREFERENCES, Configuracoes.getInstance().getTipoArmazenamento());
+        editor.putInt(STORAGE_TYPE_SHARED_PREFERENCES, Configuracoes.getInstance().getTipoArmazenamento());
         editor.commit();
     }
 
@@ -161,7 +154,7 @@ public class ListaContatosActivity extends AppCompatActivity implements AdapterV
                 //abrindo tela de novo contato
                 //Intent novoContatoIntent = new Intent(this, ContatoActivity.class);
                 Intent novoContatoIntent = new Intent("NOVO_CONTATO_ACTION"); //OUTRA FORMA DE ABRIR UMA ACTIVITY (definido no Manifest)
-                startActivityForResult(novoContatoIntent, NOVO_CONTATO_REQUEST_CODE);
+                startActivityForResult(novoContatoIntent, NEW_CONTACT_REQUEST_CODE);
                 return true;
             case R.id.sairMenuItem:
                 finish();
@@ -174,10 +167,10 @@ public class ListaContatosActivity extends AppCompatActivity implements AdapterV
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
 
         switch (requestCode){
-            case NOVO_CONTATO_REQUEST_CODE:
+            case NEW_CONTACT_REQUEST_CODE:
                 if (resultCode == RESULT_OK){
                     // Recupera o contato da Intent data
-                    Contato novoContato = (Contato) data.getSerializableExtra(CONTATO_EXTRA);
+                    Contato novoContato = (Contato) data.getSerializableExtra(EXTRA_CONTACT);
                     // Atualiza a lista e notifico o adapter
                     if (novoContato != null) {
                         listaContatos.add(novoContato);
@@ -189,14 +182,14 @@ public class ListaContatosActivity extends AppCompatActivity implements AdapterV
                 if (resultCode == RESULT_CANCELED){
                         Toast.makeText(this, "Cadastro Cancelado!", Toast.LENGTH_SHORT).show();
                 }
-            case EDITAR_CONTATO_REQUEST_CODE:
+            case SET_CONTACT_REQUEST_CODE:
                 if (resultCode == RESULT_OK) {
                     //atualizar lista com o usuário atualizado
-                    Contato editarContato = (Contato) data.getSerializableExtra(CONTATO_EDITAR);
+                    Contato editarContato = (Contato) data.getSerializableExtra(SET_CONTACT);
                     int index = data.getIntExtra(INDEX_LIST_VIEW, -1);
                     if (index != -1) {
                         listaContatos.set(index, editarContato);
-                        Toast.makeText(this, "Contato Atualizado!", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Informações do contato atualizadas!", Toast.LENGTH_SHORT).show();
                     }
                     listaContatosAdapter.notifyDataSetChanged();
                     break;
@@ -219,7 +212,7 @@ public class ListaContatosActivity extends AppCompatActivity implements AdapterV
 
         switch (item.getItemId()){
             case R.id.editarContatoMenuItem:
-                abrirTelaEditarContato(contato, infoMenu.position);
+                EditarContato(contato, infoMenu.position);
                 return true;
             case R.id.ligarContatoMenuItem:
                 //Abrir Intent para ligar para o contato
@@ -270,17 +263,6 @@ public class ListaContatosActivity extends AppCompatActivity implements AdapterV
         removeAlertDialog.show();
     }
 
-    private void abrirTelaEditarContato(Contato contato, int position) {
-
-        Intent editarContatoIntent = new Intent(this, ContatoActivity.class);
-
-        editarContatoIntent.putExtra(CONTATO_EDITAR, contato);
-        editarContatoIntent.putExtra(INDEX_LIST_VIEW, position);
-        editarContatoIntent.setAction(CONTATO_EDITAR);
-        startActivityForResult(editarContatoIntent, EDITAR_CONTATO_REQUEST_CODE);
-
-    }
-
 
     //Ao clicar em algum item da lista exibe apenas as informações
     @Override
@@ -289,9 +271,21 @@ public class ListaContatosActivity extends AppCompatActivity implements AdapterV
         Contato contato = listaContatos.get(position);
         Intent detalhesContatoIntent = new Intent(this, ContatoActivity.class);
 
-        detalhesContatoIntent.putExtra(CONTATO_EXTRA, contato);
-        detalhesContatoIntent.setAction(CONTATO_EXTRA);
+        detalhesContatoIntent.putExtra(EXTRA_CONTACT, contato);
+        detalhesContatoIntent.setAction(EXTRA_CONTACT);
         startActivity(detalhesContatoIntent);
+
+    }
+
+    //edição do contato selecionado
+    private void EditarContato(Contato contato, int position) {
+
+        Intent editarContatoIntent = new Intent(this, ContatoActivity.class);
+
+        editarContatoIntent.putExtra(SET_CONTACT, contato);
+        editarContatoIntent.putExtra(INDEX_LIST_VIEW, position);
+        editarContatoIntent.setAction(SET_CONTACT);
+        startActivityForResult(editarContatoIntent, SET_CONTACT_REQUEST_CODE);
 
     }
 }

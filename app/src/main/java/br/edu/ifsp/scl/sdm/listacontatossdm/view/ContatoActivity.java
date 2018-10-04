@@ -16,12 +16,10 @@ public class ContatoActivity extends AppCompatActivity implements View.OnClickLi
     private EditText enderecoEditText;
     private EditText telefoneEditText;
     private EditText emailEditText;
+    private String MODO = null;
+    private int indexEdit;
     private Button cancelarButton;
     private Button salvarButton;
-
-    private String MODO = null;
-
-    private int indexEdit;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,9 +45,9 @@ public class ContatoActivity extends AppCompatActivity implements View.OnClickLi
 
         if (MODO != null){
 
-            if (MODO == ListaContatosActivity.CONTATO_EXTRA) {
+            if (MODO == ListaContatosActivity.EXTRA_CONTACT) {
 
-                Contato contato = (Contato) getIntent().getSerializableExtra(ListaContatosActivity.CONTATO_EXTRA);
+                Contato contato = (Contato) getIntent().getSerializableExtra(ListaContatosActivity.EXTRA_CONTACT);
 
                 if (contato != null) {
                     //Modo Detalhes
@@ -57,20 +55,20 @@ public class ContatoActivity extends AppCompatActivity implements View.OnClickLi
                     modoDetalhes(contato);
                 }
             }
-            else if (MODO == ListaContatosActivity.CONTATO_EDITAR){
+            else if (MODO == ListaContatosActivity.SET_CONTACT){
 
-                Contato contato = (Contato) getIntent().getSerializableExtra(ListaContatosActivity.CONTATO_EDITAR);
+                Contato contato = (Contato) getIntent().getSerializableExtra(ListaContatosActivity.SET_CONTACT);
                 indexEdit = getIntent().getIntExtra(ListaContatosActivity.INDEX_LIST_VIEW, -1);
 
                 if (contato != null) {
-                    //Modo Editar
-                    subtitulo = "Editar Contato";
-                    modoEditar(contato);
+                    //Edicao
+                    subtitulo = "Edite o contato";
+                    Edicao(contato);
                 }
             }
             else{
                 //Modo Novo Contato
-                MODO = ListaContatosActivity.CONTATO_EXTRA;
+                MODO = ListaContatosActivity.EXTRA_CONTACT;
                 subtitulo = "Novo Contato";
             }
         }
@@ -78,14 +76,16 @@ public class ContatoActivity extends AppCompatActivity implements View.OnClickLi
         getSupportActionBar().setSubtitle(subtitulo);
     }
 
-    private void modoEditar(Contato contato) {
+    private Contato getDadosContato() {
 
-        nomeEditText.setText(contato.getNome());
-        enderecoEditText.setText(contato.getEndereco());
-        telefoneEditText.setText(contato.getTelefone());
-        emailEditText.setText(contato.getEmail());
+        Contato contato = new Contato();
 
-        salvarButton.setText("Salvar Edição");
+        contato.setNome(nomeEditText.getText().toString());
+        contato.setEndereco(enderecoEditText.getText().toString());
+        contato.setTelefone(telefoneEditText.getText().toString());
+        contato.setEmail(emailEditText.getText().toString());
+
+        return contato;
     }
 
     private void modoDetalhes(Contato contato) {
@@ -105,6 +105,16 @@ public class ContatoActivity extends AppCompatActivity implements View.OnClickLi
         cancelarButton.setText("Voltar");
     }
 
+    private void Edicao(Contato contato) {
+
+        nomeEditText.setText(contato.getNome());
+        enderecoEditText.setText(contato.getEndereco());
+        telefoneEditText.setText(contato.getTelefone());
+        emailEditText.setText(contato.getEmail());
+
+        salvarButton.setText("Salvar Edição");
+    }
+
     @Override
     public void onClick(View view) {
 
@@ -121,16 +131,16 @@ public class ContatoActivity extends AppCompatActivity implements View.OnClickLi
                 //cria nova intenção para os resultados
                 Intent resultadoIntent = new Intent();
 
-                if (MODO == ListaContatosActivity.CONTATO_EXTRA) {
+                if (MODO == ListaContatosActivity.EXTRA_CONTACT) {
 
-                    resultadoIntent.putExtra(ListaContatosActivity.CONTATO_EXTRA, contato);
-                    resultadoIntent.setAction(ListaContatosActivity.CONTATO_EXTRA);
+                    resultadoIntent.putExtra(ListaContatosActivity.EXTRA_CONTACT, contato);
+                    resultadoIntent.setAction(ListaContatosActivity.EXTRA_CONTACT);
                     setResult(RESULT_OK, resultadoIntent);
                 }
-                else if (MODO == ListaContatosActivity.CONTATO_EDITAR){
+                else if (MODO == ListaContatosActivity.SET_CONTACT){
 
-                    resultadoIntent.putExtra(ListaContatosActivity.CONTATO_EDITAR, contato);
-                    resultadoIntent.setAction(ListaContatosActivity.CONTATO_EDITAR);
+                    resultadoIntent.putExtra(ListaContatosActivity.SET_CONTACT, contato);
+                    resultadoIntent.setAction(ListaContatosActivity.SET_CONTACT);
                     resultadoIntent.putExtra(ListaContatosActivity.INDEX_LIST_VIEW, indexEdit);
                     setResult(RESULT_OK, resultadoIntent);
                 }
@@ -138,18 +148,6 @@ public class ContatoActivity extends AppCompatActivity implements View.OnClickLi
                 break;
         }
 
-    }
-
-    private Contato getDadosContato() {
-
-        Contato contato = new Contato();
-
-        contato.setNome(nomeEditText.getText().toString());
-        contato.setEndereco(enderecoEditText.getText().toString());
-        contato.setTelefone(telefoneEditText.getText().toString());
-        contato.setEmail(emailEditText.getText().toString());
-
-        return contato;
     }
 
 
